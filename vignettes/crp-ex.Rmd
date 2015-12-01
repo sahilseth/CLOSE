@@ -1,0 +1,89 @@
+---
+output: 
+html_document: 
+number_sections: yes
+toc: yes
+---
+
+
+
+# creating a simple CRP reproducible example
+
+
+```{r}
+library(params)
+library(dplyr)
+
+inp = read_sheet("inst/example.input.txt") %>% tbl_df()
+cnstat = read_sheet("inst/example.CNstatus.txt") %>% tbl_df()
+
+
+# run the CRP function (supposedly the main function)
+out = CRP(inp, sampleName = "inst/example")
+
+data = out$CNstatus %>% tbl_df()
+
+# ------------------- run mapr ------------------- #
+# remove outlier
+data = filter(data, abs(logR_mean) < 2)
+
+OLL <- data.matrix(data[, c(5,4)])
+
+slength <- (data$end-data$start)/1000000
+
+p_grid <- seq(0.2,1,0.1); 
+
+# la is ploidy
+la_grid <- seq(1,5,1)
+CanP <- Cpoints(p_grid,la_grid)
+
+#fitPP(OLL,slength,LAF.wt=c(1,5))
+glob_cn = fitPP(OLL,slength,LAF.wt=c(1,4))
+
+plot(glob_cn$CanP.name1, glob_cn$sum.dist)
+
+# closer
+# arrange by chr and start position
+data = arrange(data, chr, start)
+
+data0 <-data[, 1:5]
+
+# pp is ploidy estimates
+pp <- PP[PP[,1] == tnames[i],]
+
+pp1=as.numeric(strsplit(pp[2],"/")[[1]][1]); pp2=as.numeric(strsplit(pp[2],"/")[[1]][2])
+RES<-fitCLOSE1(data0,la=pp2,p=pp1)
+#read falcon results
+#tname_short<-strsplit(tnames[i],"T")[[1]][1]
+tname_short<-tnames[i]
+gname<-paste("~/Dropbox/xiaoqing_share/falcon_yusample/",tname_short,"/CLOSER_falcon.txt",sep="")
+gdata<-read.table(gname,head=T,as.is=T)[,c(1,2,11,12)]
+falcon_tCN<-gdata$falcon_minCN+gdata$falcon_majCN
+gdata<-cbind(gdata,falcon_tCN)
+#merge and calculate correlation
+OUT<-merge(RES,gdata,by=c("chr","start")); OUT<-OUT[order(OUT[,1],OUT[,2]),]
+OUT<-merge(OUT,data[,c(1,2,9)],by=c("chr","start"))
+close_status<-rep("NA",nrow(OUT))
+for (k in 1:nrow(OUT)){
+  if (OUT$tCN[k]>2) {close_status[k]="G"}
+  if (OUT$tCN[k]<2) {close_status[k]="L"}
+  if (OUT$tCN[k]==2) {close_status[k]="N"}
+  if (OUT$tCN[k]==2 & OUT$minCN[k]==0) {close_status[k]="CNL"}
+}
+OUT=data.frame(OUT,close_status)
+OUT1<-OUT[OUT$status_cluster!="A",]
+TRate[j]<-sum(OUT1$status_cluster==OUT1$close_status)/nrow(OUT1)
+OUT<-OUT[OUT$tCN<6,]    #remove outliers OUT$tCN>6
+#TRate[j]<-sum(OUT$status_cluster==OUT$close_status)/nrow(OUT)
+TCOR[j,]=c(cor(OUT$falcon_minCN,OUT$min,use="complete.obs"),cor(OUT$falcon_tCN,OUT$tCN,use="complete.obs"),
+           cor(round(OUT$falcon_minCN),OUT$min,use="complete.obs"), cor(round(OUT$falcon_tCN),OUT$tCN,use="complete.obs")
+)
+TOUT[[j]]<-OUT; OUT<-NULL
+
+
+
+# try on our data
+inp2 = read_sheet("/rsrch2/iacs/iacs_dep/jzhang22/projects/H_Garber/sequenza/H-Garber-C5GRBACXX-HG-CE-Leukemia-HC12-CL2039A/H-Garber-C5GRBACXX-HG-CE-Leukemia-HC12-CL2039A_111120151447250974_segments.txt") %>% tbl_df()
+
+```
+
