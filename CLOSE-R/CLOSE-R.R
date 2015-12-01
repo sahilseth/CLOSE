@@ -2,7 +2,7 @@
 #xuefeng.wang@stonybrook.edu; xuefeng.wang@yale.edu
 
 
-get.MCpoints<-function(p_grid=0.92,la=4){
+get.MCpoints <- function(p_grid=0.92,la=4){
  PP.matrix<-data.matrix(expand.grid(p_grid,la)); colnames(PP.matrix)<-c("purity","ploidy")
  BC.matrix<-BC.expand(x=6); colnames(BC.matrix)<-c("B","total")
  LRR_LAF.array<-array(dim=c(nrow(PP.matrix),nrow(BC.matrix),2))
@@ -166,7 +166,3 @@ foo=merge(tab1,seq76,by.x="tnames",by.y="Tumor")
 #require(ggplot2)
 #ggplot(dat,aes(x=close,y=sequenza))+geom_point()+geom_line()
 TABLE<-foo[,c(1,3,11,5)]
-
-
-
-
