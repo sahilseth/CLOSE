@@ -22,12 +22,13 @@ get.MCpoints <- function(p_grid=0.92,la=4){
   names(out)[3:4]<-c("B","C")
   return(out)
 }
+
 #get.MCpoints(p_grid=0.92,la=4)
 #get.MCpoints(p_grid=0.95,la=2)
 
 ##main function to estimate local copy number given ploidy and purity (based on segmental ASCN coordinates)
 ##assume one clone
-fitCLOSE1<-function(data0,la,p){
+fitCLOSE1 <- function(data0,la,p){
    #data0: c1: chr; c2-c3: strat and end postion, c4, LAF, c5,LRR
    #slength: length of each segments
    #la=2;p=1
